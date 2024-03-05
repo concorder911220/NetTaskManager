@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using ErrorOr;
 using Flurl;
 using Microsoft.Extensions.Options;
 using TaskManager.Common;
@@ -42,7 +43,7 @@ public class ExternalAuthService(IOptions<GoogleOAuthOptions> googleOAuthOptions
         return url;
     }
 
-    public async Task<TokenResponse> GetCredentials(string code, string redirectUrl)
+    public async Task<ErrorOr<TokenResponse>> GetCredentials(string code, string redirectUrl)
     {
         var uri = TokenUrl.SetQueryParams(new
         {
@@ -57,9 +58,14 @@ public class ExternalAuthService(IOptions<GoogleOAuthOptions> googleOAuthOptions
 
         var response = await client.PostAsync(uri, null);
 
+        if (!response.IsSuccessStatusCode)
+        {
+            return Error.Failure(description: "wrong code");
+        }
+        
         var json = (await response.Content.ReadFromJsonAsync<Dictionary<string, object>>())!;
 
-        return new()
+        return new TokenResponse
         {
             AccessToken = json["access_token"].ToString()!,
             RefreshToken = json["refresh_token"].ToString()!

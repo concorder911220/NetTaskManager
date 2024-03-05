@@ -2,9 +2,10 @@
 
 namespace TaskManager.WebApi.Middlewares;
 
-public class CustomExceptionHandlerMiddleware(RequestDelegate next)
+public class CustomExceptionHandlerMiddleware(RequestDelegate next, IWebHostEnvironment environment)
 {
     private readonly RequestDelegate _next = next;
+    private readonly IWebHostEnvironment _environment = environment;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -21,7 +22,7 @@ public class CustomExceptionHandlerMiddleware(RequestDelegate next)
     public async Task HandleExceptionAsync(Exception exception, HttpContext context)
     {
         int status = 500;
-        IEnumerable<string> errors = ["Internal server error"];
+        IEnumerable<string> errors = [_environment.IsDevelopment() ? exception.Message : "Internal server error"];
 
         switch (exception)
         {

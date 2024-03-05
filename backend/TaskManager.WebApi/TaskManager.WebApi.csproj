@@ -23,7 +23,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Modules\Login\" />
+		<Folder Include="Modules\Auth\" />
 	</ItemGroup>
 
 	<ItemGroup>

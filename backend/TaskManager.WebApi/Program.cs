@@ -7,6 +7,7 @@ using TaskManager.Common;
 using TaskManager.Infrastructure;
 using TaskManager.Infrastructure.Services;
 using TaskManager.WebApi.Extensions;
+using TaskManager.WebApi.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +57,7 @@ else
 
 app.UseHttpsRedirection();
 
-// app.UseCustomExceptionHandler();
+app.UseCustomExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -64,9 +65,9 @@ app.UseAuthorization();
 var apiGroup = app.MapGroup("api");
 apiGroup.MapEndpoints();
 
-apiGroup.MapGet("test", ([FromQuery] string token, HttpContext context, JwtService jwtService) =>
+apiGroup.MapGet("test", () =>
 {
-    var test = jwtService.GetPrincipalFromExpiredToken(token);
-});
+    return "Ok";
+}).RequireAuthorization();
 
 app.Run();

@@ -1,4 +1,6 @@
-﻿using ErrorOr;
+﻿using System.Security.Cryptography;
+using System.Text;
+using ErrorOr;
 using Mapster;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -9,7 +11,7 @@ using TaskManager.Infrastructure.Services;
 
 namespace TaskManager.Application.Commands.Login;
 
-public class LoginUserRequest : IRequest<LoginUserResponse>
+public class LoginUserRequest : IRequest<(LoginUserResponse, string)>
 {
     public required string Sub { get; set; }
     public required string Username { get; set; }
@@ -24,17 +26,16 @@ public class LoginUserResponse
     public required string Username { get; set; }
     public required string Email { get; set; }
     public required string Picture { get; set; }
-    public required string RefreshToken { get; set; }
 }
 
 public class LoginUserRequestHandler(AppDbContext appDbContext, IOptions<JwtOptions> jwtOptions, JwtService jwtService)
-    : IRequestHandler<LoginUserRequest, LoginUserResponse>
+    : IRequestHandler<LoginUserRequest, (LoginUserResponse, string)>
 {
     private readonly AppDbContext _appDbContext = appDbContext;
     private readonly IOptions<JwtOptions> _jwtOptions = jwtOptions;
     private readonly JwtService _jwtService = jwtService;
 
-    public async Task<LoginUserResponse> Handle(LoginUserRequest request, CancellationToken cancellationToken)
+    public async Task<(LoginUserResponse, string)> Handle(LoginUserRequest request, CancellationToken cancellationToken)
     {
         var user = _appDbContext.Users.FirstOrDefault(u => u.Sub == request.Sub);
 
@@ -51,10 +52,12 @@ public class LoginUserRequestHandler(AppDbContext appDbContext, IOptions<JwtOpti
             user.Picture = request.Picture;
         }
         
-        user.RefreshToken = jwtService.GenerateRefreshToken();
+        var refreshToken = _jwtService.GenerateRefreshToken();
+
+        user.RefreshToken = _jwtService.Hash(refreshToken);
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtOptions.Value.RefreshTokenExpiryTimeInDays);
         
         await _appDbContext.SaveChangesAsync(cancellationToken);
-        return user.Adapt<LoginUserResponse>();
+        return (user.Adapt<LoginUserResponse>(), refreshToken);
     }
 }

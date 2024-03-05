@@ -5,13 +5,15 @@ namespace TaskManager.WebApi.Extensions;
 
 public static class CustomResults
 {
-    public static IResult Json<T>(ErrorOr<T> result)
+    public static IResult ErrorJson(int code, List<Error> errors)
     {
-        return Results.Json(result.MatchFirst(
-            value => value,
-            error => throw GetApiException(error)));
+        return Results.Json(statusCode: code, data: new
+        {
+            status_code = code,
+            errors = errors.Select(e => e.Description)
+        });
     }
-
+    
     public static ApiException GetApiException(Error error)
     {
         return error.Type switch
