@@ -1,13 +1,13 @@
 using System.Text;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using TaskManager.Application;
 using TaskManager.Common;
 using TaskManager.Infrastructure;
-using TaskManager.Infrastructure.Services;
 using TaskManager.WebApi.Extensions;
 using TaskManager.WebApi.Middlewares;
+using TaskManager.WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,12 +15,15 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<UserContext>();
 builder.Services.AddHttpClient();
 
 builder.Services.RegisterModules();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSettings"));
 
@@ -63,11 +66,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 var apiGroup = app.MapGroup("api");
-apiGroup.MapEndpoints();
 
-apiGroup.MapGet("test", () =>
-{
-    return "Ok";
-}).RequireAuthorization();
+apiGroup.MapEndpoints();
 
 app.Run();

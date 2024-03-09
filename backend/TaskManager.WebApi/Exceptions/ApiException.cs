@@ -1,4 +1,6 @@
-﻿namespace TaskManager.WebApi.Exceptions;
+﻿using FluentValidation;
+
+namespace TaskManager.WebApi.Exceptions;
 
 public record ApiError(string Details, string? Property = null)
 {
@@ -20,5 +22,21 @@ public class ApiException : Exception
     {
         Status = status;
         Errors = [new(error)];
+    }
+
+    public static async Task ValidateAsync<T>(IValidator<T> validator, T? model)
+    {
+        if (model is null)
+        {
+            throw new ApiException(400, $"{typeof(T).Name} is null");
+        }
+        
+        var result = await validator.ValidateAsync(model);
+
+        if (!result.IsValid)
+        {
+            var errors = result.Errors.Select(e => new ApiError(e.ErrorMessage, e.PropertyName));
+            throw new ApiException(400, errors);
+        }
     }
 }

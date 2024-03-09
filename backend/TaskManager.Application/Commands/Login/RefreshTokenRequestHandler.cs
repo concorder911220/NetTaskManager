@@ -64,7 +64,7 @@ public class RefreshTokenRequestHandler(JwtService jwtService, AppDbContext appD
             AccessToken = _jwtService.GenerateToken(user),
             RefreshToken = _jwtService.GenerateRefreshToken()
         };
-
+        
         user.RefreshToken = _jwtService.Hash(response.RefreshToken);
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtOptions.Value.RefreshTokenExpiryTimeInDays);
 

@@ -8,5 +8,8 @@ public class User
     public string Picture { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string RefreshToken { get; set; } = null!;
-    public DateTime RefreshTokenExpiryTime { get; set; } 
+    public DateTime RefreshTokenExpiryTime { get; set; }
+
+    public ICollection<Board>? Boards { get; set; }
+    public ICollection<Assignment>? Assignments { get; set; }
 }

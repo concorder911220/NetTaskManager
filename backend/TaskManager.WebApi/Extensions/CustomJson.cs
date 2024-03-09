@@ -1,5 +1,4 @@
 ﻿using ErrorOr;
-using TaskManager.WebApi.Exceptions;
 
 namespace TaskManager.WebApi.Extensions;
 
@@ -9,28 +8,25 @@ public static class CustomResults
     {
         return Results.Json(statusCode: code, data: new
         {
-            status_code = code,
+            status = code,
             errors = errors.Select(e => e.Description)
         });
     }
     
-    public static ApiException GetApiException(Error error)
+    public static IResult ErrorJson(ErrorType errorType, List<Error> errors)
     {
-        return error.Type switch
+        var code = errorType switch
         {
-            ErrorType.Unauthorized => new ApiException(401, error.Description),
-            ErrorType.NotFound => new ApiException(404, error.Description),
-            _ => new ApiException(500, error.Description)
+            ErrorType.Failure => 400,
+            ErrorType.Unauthorized => 401,
+            ErrorType.NotFound => 404,
+            _ => 500
         };
-    }
-
-    public static IResult Ok<T>(ErrorOr<T> result)
-    {
-        if (result.IsError)
+        
+        return Results.Json(statusCode: code, data: new
         {
-            throw GetApiException(result.FirstError);
-        }
-
-        return Results.Ok();
+            status = code,
+            errors = errors.Select(e => e.Description)
+        });
     }
 }

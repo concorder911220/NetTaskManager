@@ -10,7 +10,7 @@ using TaskManager.Domain.Entities;
 using TaskManager.Infrastructure.Services;
 using TaskManager.WebApi.Extensions;
 
-namespace TaskManager.WebApi.Modules.Auth;
+namespace TaskManager.WebApi.Modules;
 
 public class AuthModule : IModule
 {
@@ -67,7 +67,10 @@ public class AuthModule : IModule
         });
     }
 
-    public async Task<IResult> Refresh(HttpContext context, ISender sender, IOptions<JwtOptions> jwtOptions)
+    public async Task<IResult> Refresh(
+        HttpContext context, 
+        ISender sender, 
+        IOptions<JwtOptions> jwtOptions)
     {
         var accessToken = context.Request.Headers[HeaderNames.Authorization]
             .ToString()
@@ -93,7 +96,6 @@ public class AuthModule : IModule
 
         if (!response.IsError)
         {
-            context.Response.Cookies.Delete("refresh-token");
             context.Response.Cookies.Append("refresh-token", response.Value.RefreshToken, new()
             {
                 Expires = DateTime.UtcNow.AddDays(jwtOptions.Value.RefreshTokenExpiryTimeInDays),
@@ -105,13 +107,7 @@ public class AuthModule : IModule
         
         var error = response.FirstError;
             
-        return CustomResults.ErrorJson(error.Type switch
-        {
-            ErrorType.Failure => 400,
-            ErrorType.Unauthorized => 401,
-            ErrorType.NotFound => 404,
-            _ => 500
-        }, [error]);
+        return CustomResults.ErrorJson(error.Type, [error]);
     }
     
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
